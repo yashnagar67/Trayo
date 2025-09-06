@@ -4,6 +4,7 @@ import Header from './components/Header';
 import ImageUploader from './components/ImageUploader';
 import LoadingState from './components/LoadingState';
 import ResultDisplay from './components/ResultDisplay';
+import TShirtCatalog from './components/TShirtCatalog';
 import { generateTryOnImage } from './services/geminiService';
 import type { ImageData } from './types';
 
@@ -20,90 +21,146 @@ const OutfitIcon = () => (
     </svg>
 );
 
+const BottomNav = ({ selected, onSelect }: { selected: number, onSelect: (idx: number) => void }) => (
+  <nav style={{
+    position: 'fixed',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: '#fff',
+    borderTop: '1px solid #eee',
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    height: 64,
+    zIndex: 100,
+    boxShadow: '0 -2px 8px #0001',
+  }}>
+    {[
+      { label: 'Home', icon: (
+        <svg width="26" height="26" fill="none" stroke="#222" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 12L12 3l9 9"/><path d="M9 21V9h6v12"/></svg>
+      ) },
+      { label: 'Current selection', icon: (
+        <svg width="26" height="26" fill="none" stroke="#222" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+      ) },
+      { label: 'Try-On', icon: (
+        <svg width="32" height="32" fill="#fff" stroke="#222" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+      ) },
+      { label: 'Wishlist', icon: (
+        <svg width="26" height="26" fill="none" stroke="#222" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 21C12 21 4 13.5 4 8.5C4 5.5 6.5 3 9.5 3C11.24 3 12.91 4.01 13.44 5.61C13.97 4.01 15.64 3 17.38 3C20.38 3 22.88 5.5 22.88 8.5C22.88 13.5 15 21 15 21H12Z"/></svg>
+      ) },
+      { label: 'Profile', icon: (
+        <svg width="26" height="26" fill="none" stroke="#222" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 8-4 8-4s8 0 8 4"/></svg>
+      ) },
+    ].map((item, i) => (
+      <div key={item.label} onClick={() => onSelect(i)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', fontSize: 12, color: selected === i ? '#222' : '#888', fontWeight: selected === i ? 700 : 400, cursor: 'pointer' }}>
+        {item.icon}
+        <span style={{ marginTop: 2 }}>{item.label}</span>
+        {selected === i && <div style={{ width: 24, height: 3, background: '#222', borderRadius: 2, marginTop: 2 }} />}
+      </div>
+    ))}
+  </nav>
+);
+
 const App: React.FC = () => {
-    const [modelImage, setModelImage] = useState<ImageData | null>(null);
-    const [outfitImage, setOutfitImage] = useState<ImageData | null>(null);
-    const [generatedImage, setGeneratedImage] = useState<ImageData | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string | null>(null);
-    
-    const handleTryOn = async () => {
-        if (!modelImage || !outfitImage) {
-            setError("Please upload both your photo and an outfit photo.");
-            return;
-        }
-        setLoading(true);
-        setError(null);
-        setGeneratedImage(null);
+  const [modelImage, setModelImage] = useState<ImageData | null>(null);
+  const [outfitImage, setOutfitImage] = useState<ImageData | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<ImageData | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<number>(2); // 2 = Try-On, 1 = Catalog
 
-        try {
-            const result = await generateTryOnImage(modelImage, outfitImage);
-            if (result) {
-                setGeneratedImage(result);
-            } else {
-                setError("Could not generate an image from the response. Please try again.");
-            }
-        } catch (err: any) {
-            setError(err.message || "An unknown error occurred.");
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    const isButtonDisabled = !modelImage || !outfitImage || loading;
+  const handleTryOn = async () => {
+    if (!modelImage || !outfitImage) {
+      setError("Please upload both your photo and an outfit photo.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    setGeneratedImage(null);
+    try {
+      const result = await generateTryOnImage(modelImage, outfitImage);
+      if (result) {
+        setGeneratedImage(result);
+      } else {
+        setError("Could not generate an image from the response. Please try again.");
+      }
+    } catch (err: any) {
+      setError(err.message || "An unknown error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center p-4 sm:p-6 lg:p-8">
-            <Header />
-            <main className="w-full max-w-6xl mx-auto">
-                {!generatedImage ? (
-                    <div className="space-y-8">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                            <ImageUploader 
-                                title="1. Upload Your Photo" 
-                                icon={<PersonIcon />}
-                                onImageUpload={setModelImage}
-                                previewUrl={modelImage?.dataUrl ?? null}
-                            />
-                            <ImageUploader 
-                                title="2. Upload Outfit Photo" 
-                                icon={<OutfitIcon />}
-                                onImageUpload={setOutfitImage}
-                                previewUrl={outfitImage?.dataUrl ?? null}
-                            />
-                        </div>
+  const isButtonDisabled = !modelImage || !outfitImage || loading;
 
-                        <div className="text-center relative pt-4">
-                            {error && <p className="text-red-500 mb-4">{error}</p>}
-                            <div className="relative inline-block">
-                               <button 
-                                    onClick={handleTryOn} 
-                                    disabled={isButtonDisabled}
-                                    className="relative px-8 py-4 text-lg font-bold text-white bg-slate-800 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed group"
-                                >
-                                    <span className="absolute inset-0 bg-indigo-600 transition-transform duration-300 ease-in-out transform scale-x-0 group-hover:scale-x-100 origin-left"></span>
-                                    <span className="relative z-10">Generate Try-On</span>
-                                </button>
-                                {loading && <LoadingState />}
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="mt-8">
-                        <ResultDisplay image={generatedImage} />
-                        <div className="text-center mt-8">
-                            <button 
-                                onClick={() => setGeneratedImage(null)}
-                                className="px-6 py-2 text-base font-medium text-indigo-600 bg-transparent border border-indigo-600 rounded-md hover:bg-indigo-50 transition-colors"
-                            >
-                                Try Another Outfit
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </main>
-        </div>
-    );
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col items-center p-4 sm:p-6 lg:p-8" style={{ paddingBottom: 80 }}>
+      {tab !== 1 && <Header />}
+      <main className="w-full max-w-6xl mx-auto">
+        {tab === 2 && (
+          // Try-On tab: main page with 2 input image fields
+          !generatedImage ? (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                <ImageUploader 
+                  title="1. Upload Your Photo" 
+                  icon={<PersonIcon />} 
+                  onImageUpload={setModelImage} 
+                  previewUrl={modelImage?.dataUrl ?? null} 
+                />
+                <ImageUploader 
+                  title="2. Upload Outfit Photo" 
+                  icon={<OutfitIcon />} 
+                  onImageUpload={setOutfitImage} 
+                  previewUrl={outfitImage?.dataUrl ?? null} 
+                />
+              </div>
+              <div className="text-center relative pt-4">
+                {error && <p className="text-red-500 mb-4">{error}</p>}
+                <div className="relative inline-block">
+                  <button 
+                    onClick={handleTryOn} 
+                    disabled={isButtonDisabled}
+                    className="relative px-8 py-4 text-lg font-bold text-white bg-slate-800 rounded-lg shadow-lg overflow-hidden transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed group"
+                  >
+                    <span className="absolute inset-0 bg-indigo-600 transition-transform duration-300 ease-in-out transform scale-x-0 group-hover:scale-x-100 origin-left"></span>
+                    <span className="relative z-10">Generate Try-On</span>
+                  </button>
+                  {loading && <LoadingState />}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-8">
+              <ResultDisplay image={generatedImage} />
+              <div className="text-center mt-8">
+                <button 
+                  onClick={() => setGeneratedImage(null)}
+                  className="px-6 py-2 text-base font-medium text-indigo-600 bg-transparent border border-indigo-600 rounded-md hover:bg-indigo-50 transition-colors"
+                >
+                  Try Another Outfit
+                </button>
+              </div>
+            </div>
+          )
+        )}
+        {tab === 1 && (
+          // Current selection tab: show catalog
+          <TShirtCatalog onSelectOutfit={(img) => {
+            setOutfitImage(img);
+            setTab(2);
+          }} />
+        )}
+        {tab !== 1 && tab !== 2 && (
+          <div style={{ textAlign: 'center', marginTop: 40, color: '#888', fontSize: 20 }}>
+            Coming soon...
+          </div>
+        )}
+      </main>
+      <BottomNav selected={tab} onSelect={setTab} />
+    </div>
+  );
 };
 
 export default App;
