@@ -66,21 +66,23 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onImageUpload, title, ico
 
     return (
         <div className="w-full">
-            <h3 className="text-lg font-semibold text-slate-700 mb-2 text-center">{title}</h3>
+            <h3 className="text-sm sm:text-base md:text-lg font-semibold text-slate-700 mb-2 text-center">{title}</h3>
             <label
                 onDrop={onDrop}
                 onDragOver={onDragOver}
                 onDragEnter={onDragEnter}
                 onDragLeave={onDragLeave}
-                className={`relative flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-white transition-colors duration-200 ${uploaderClass}`}
+                className={`relative flex flex-col items-center justify-center w-full h-32 sm:h-40 md:h-48 lg:h-64 border-2 border-dashed rounded-lg cursor-pointer bg-white transition-colors duration-200 ${uploaderClass}`}
             >
                 {previewUrl ? (
                     <img src={previewUrl} alt={title} className="object-contain w-full h-full rounded-lg" />
                 ) : (
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6 text-slate-500">
-                        {icon}
-                        <p className="mb-2 text-sm"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                        <p className="text-xs">PNG, JPG, WEBP</p>
+                    <div className="flex flex-col items-center justify-center p-2 sm:p-4 text-slate-500">
+                        <div className="scale-75 sm:scale-90 md:scale-100">
+                            {icon}
+                        </div>
+                        <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-center"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                        <p className="text-xs text-center">PNG, JPG, WEBP</p>
                     </div>
                 )}
                 <input type="file" onChange={onFileChange} className="hidden" accept="image/*" />
